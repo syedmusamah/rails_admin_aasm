@@ -21,13 +21,13 @@ module RailsAdmin
             ]
 
             bindings[:object].aasm.events.each do |event|
-              next unless event.may_fire? bindings[:object]
-              next unless v.authorized?(:state, @abstract_model, bindings[:object]) && (v.authorized?(:all_events, @abstract_model, bindings[:object]) || v.authorized?(event.name, @abstract_model, bindings[:object]))
-              event_class = @state_machine_options.event(event.name)
+              next unless bindings[:object].send "may_#{event}?"
+              next unless v.authorized?(:state, @abstract_model, bindings[:object]) && (v.authorized?(:all_events, @abstract_model, bindings[:object]) || v.authorized?(event, @abstract_model, bindings[:object]))
+              event_class = @state_machine_options.event(event)
               ret << bindings[:view].link_to(
-                event.name.to_s.capitalize,
-                state_path(model_name: @abstract_model, id: bindings[:object].id, event: event.name, attr: name),
-                method: :post, 
+                event.to_s.capitalize,
+                state_path(model_name: @abstract_model, id: bindings[:object].id, event: event, attr: name),
+                method: :post,
                 class: "btn btn-mini #{event_class}",
                 style: 'margin-bottom: 5px;'
               )
@@ -53,15 +53,15 @@ module RailsAdmin
 
             empty = true
             bindings[:object].aasm.events.each do |event|
-              next unless event.may_fire? bindings[:object]
-              next unless v.authorized?(:state, @abstract_model, bindings[:object]) && (v.authorized?(:all_events, @abstract_model, bindings[:object]) || v.authorized?(event.name, @abstract_model, bindings[:object]))
+              next unless bindings[:object].send "may_#{event}?"
+              next unless v.authorized?(:state, @abstract_model, bindings[:object]) && (v.authorized?(:all_events, @abstract_model, bindings[:object]) || v.authorized?(event, @abstract_model, bindings[:object]))
               empty = false
-              event_class = @state_machine_options.event(event.name)
+              event_class = @state_machine_options.event(event)
               ret << bindings[:view].link_to(
-                event.name.to_s.capitalize,
+                event.to_s.capitalize,
                 '#',
                 'data-attr' => name,
-                'data-event' => event.name,
+                'data-event' => event,
                 class: "state-btn btn btn-mini #{event_class}",
                 style: 'margin-bottom: 5px;'
               )
@@ -78,7 +78,7 @@ module RailsAdmin
             end
             ('<div style="white-space: normal;">' + ret.join(' ') + '</div>').html_safe
           end
-          
+
           register_instance_option :export_value do
             state = bindings[:object].send(name)
             bindings[:object].aasm.human_state
